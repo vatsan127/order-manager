@@ -53,6 +53,43 @@ A one-to-many relationship means that one entity (parent) is associated with mul
 - Parent table cannot have multiple FK values for multiple children
 - This is opposite of one-to-one where either side can own
 
+### No Intermediate Table for One-to-Many
+
+In this relationship, there's **no join/intermediate table**. The FK lives directly in the child table:
+
+```
+┌─────────────────┐                  ┌─────────────────┐
+│     orders      │                  │   order_items   │
+├─────────────────┤                  ├─────────────────┤
+│ id (PK)         │◄─────────────────│ order_id (FK)   │
+│ order_number    │   Direct FK      │ id (PK)         │
+│ customer_name   │                  │ product_name    │
+└─────────────────┘                  └─────────────────┘
+```
+
+**When is an intermediate table used?**
+
+| Relationship | Intermediate Table? |
+|--------------|---------------------|
+| One-to-Many with `@JoinColumn` | ❌ No - FK in child table |
+| One-to-Many with `@JoinTable` | ✅ Yes - but not recommended |
+| **Many-to-Many** | ✅ Yes - always required |
+
+**Why no join table for One-to-Many?**
+- Each item belongs to exactly one order (simple FK is sufficient)
+- Join tables add unnecessary complexity and extra JOINs
+- Direct FK is more efficient for queries
+
+**Many-to-Many example (requires join table):**
+```
+┌──────────┐       ┌──────────────────┐       ┌──────────┐
+│ students │       │ student_courses  │       │ courses  │
+├──────────┤       ├──────────────────┤       ├──────────┤
+│ id (PK)  │◄──────│ student_id (FK)  │       │ id (PK)  │
+│ name     │       │ course_id (FK)   │──────►│ name     │
+└──────────┘       └──────────────────┘       └──────────┘
+```
+
 ---
 
 ## Important Annotations

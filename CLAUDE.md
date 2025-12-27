@@ -129,6 +129,7 @@ The application uses PostgreSQL with configuration in `application-postgres.yaml
 7. **Lombok Usage**: `@Data` annotation generates getters/setters/toString/equals/hashCode
 8. **Context Path**: API is served at `/order-manager/v1` (constructed from app name and version)
 9. **AOP Logging**: Centralized logging via `LoggingAspect` - logs method entry, exit, execution time, and exceptions
+10. **No Intermediate Table**: One-to-many uses direct FK in child table, not a join table (join tables are for many-to-many)
 
 ### Unidirectional vs Bidirectional
 
