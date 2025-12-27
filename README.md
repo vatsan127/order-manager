@@ -268,6 +268,42 @@ This executes only 1 query instead of 101!
 - **Issue**: Adding item to collection without setting back-reference (or vice versa)
 - **Solution**: Use helper methods that sync both sides (addItem/removeItem)
 
+**The problem:** In bidirectional relationships, both sides must be updated:
+
+```java
+// ❌ WRONG - Only updating one side
+order.getOrderItems().add(item);  // Parent knows about child
+// But item.order is NULL! FK won't be set in database
+
+// ❌ WRONG - Only updating other side
+item.setOrder(order);  // Child knows about parent
+// But parent's list doesn't contain item!
+```
+
+**Why it matters:** The owning side (`@ManyToOne`) controls the FK column. If `item.order` is null, the FK in database will be null - even if item is in parent's collection.
+
+| Side | Annotation | Owns FK? | Sets DB Value? |
+|------|------------|----------|----------------|
+| OrderItems (child) | `@ManyToOne` | ✅ Yes | ✅ Yes |
+| Orders (parent) | `@OneToMany(mappedBy)` | ❌ No | ❌ No |
+
+**The fix:** Always sync both sides, preferably using helper methods:
+
+```java
+// ✅ CORRECT - Helper method syncs both sides
+public void addItem(OrderItems item) {
+    orderItems.add(item);   // Parent knows child
+    item.setOrder(this);    // Child knows parent (sets FK!)
+}
+
+public void removeItem(OrderItems item) {
+    orderItems.remove(item);
+    item.setOrder(null);
+}
+```
+
+**Simply put:** The owning side (`@ManyToOne`) sets the FK. If you only update the inverse side (`@OneToMany`), the FK stays null.
+
 ### Unidirectional @OneToMany Performance
 - **Issue**: Extra UPDATE statements generated to set FK
 - **Solution**: Use bidirectional mapping instead

@@ -203,11 +203,14 @@ private List<OrderItems> orderItems = new ArrayList<>();
 
 ## Helper Methods for Bidirectional Sync
 
-Add convenience methods to Orders entity:
+**Why needed:** The owning side (`@ManyToOne`) controls the FK. If you only update the inverse side (`@OneToMany`), the FK stays null in database.
+
+**Rule:** Always sync both sides when adding/removing items. Use helper methods to avoid mistakes:
+
 ```java
 public void addItem(OrderItems item) {
-    orderItems.add(item);
-    item.setOrder(this);
+    orderItems.add(item);   // Parent knows child
+    item.setOrder(this);    // Child knows parent (sets FK!)
 }
 
 public void removeItem(OrderItems item) {
