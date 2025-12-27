@@ -100,10 +100,45 @@ Specifies the foreign key column (used on owning side)
 - Child has NO reference to parent
 - **Drawback**: Hibernate generates extra UPDATE statements to set FK after insert
 
+**Why extra UPDATE?** Child entity has no `order` field, so Hibernate can't set `order_id` during INSERT. It must come back and UPDATE.
+
+```java
+// Parent has collection, child knows nothing
+@Entity
+public class Orders {
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "order_id")  // FK defined here, not in child
+    private List<OrderItems> orderItems;
+}
+```
+
+**SQL Generated (3 statements instead of 2):**
+```sql
+INSERT INTO orders (order_number) VALUES ('ORD-001');
+INSERT INTO order_items (product_name) VALUES ('Laptop');  -- No FK!
+UPDATE order_items SET order_id = 1 WHERE id = 1;          -- Extra UPDATE
+```
+
+**Bidirectional fix:** When child has `@ManyToOne`, FK is set during INSERT - no extra UPDATE needed.
+
 ### Unidirectional @ManyToOne (Child only)
 - Child has `@ManyToOne` with `@JoinColumn`
 - Parent has NO collection
 - **Drawback**: Cannot navigate from parent to children without query
+
+**Simply put**: Child remembers its parent, but parent doesn't keep track of its children.
+
+```java
+// Child CAN find its parent
+OrderItems item = ...;
+Orders parent = item.getOrder();  // ✅ Works
+
+// Parent CANNOT find its children
+Orders order = ...;
+order.getItems();  // ❌ No such method exists
+```
+
+To get all items for an order, you must run a separate database query.
 
 ### Bidirectional (Recommended)
 - Parent has `@OneToMany(mappedBy = "order")`

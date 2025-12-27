@@ -12,6 +12,36 @@ Spring Boot 4.0.1 application demonstrating JPA one-to-many relationships betwee
 - Understanding owning side vs inverse side
 - Cascade operations and orphan removal
 
+## Implementation Status
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Project Infrastructure | ✅ Done | Maven, Spring Boot config |
+| Configuration Files | ✅ Done | application.yaml, postgres profile, logback |
+| OpenAPI/Swagger Config | ✅ Done | `OpenApiConfig.java` |
+| AOP Logging Aspect | ✅ Done | `LoggingAspect.java` |
+| Entity Classes | ❌ TODO | Orders, OrderItems |
+| Repositories | ❌ TODO | OrderRepository, OrderItemRepository |
+| Services | ❌ TODO | OrderService, OrderItemService |
+| Controllers | ❌ TODO | OrderController |
+| DTOs | ❌ TODO | Request/Response objects |
+| Exception Handling | ❌ TODO | @ControllerAdvice |
+| Database Schema | ❌ TODO | SQL scripts for tables |
+
+## Key Dependencies
+
+| Dependency | Version | Purpose |
+|------------|---------|---------|
+| Spring Boot | 4.0.1 | Parent/Framework |
+| Java | 21 | Language version |
+| spring-boot-starter-data-jpa | Parent | JPA/Hibernate ORM |
+| spring-boot-starter-webmvc | Parent | REST API |
+| spring-boot-starter-actuator | Parent | Health/Metrics |
+| spring-aop | 7.0.2 | Aspect-Oriented Programming |
+| springdoc-openapi-starter-webmvc-ui | 2.7.0 | Swagger UI |
+| postgresql | Parent | Database driver |
+| lombok | Parent | Boilerplate reduction |
+
 ## Build and Run Commands
 
 ```bash
@@ -49,13 +79,18 @@ The application uses PostgreSQL with configuration in `application-postgres.yaml
 ## Architecture
 
 ### Package Structure
-- `api/` - API interface contracts with OpenAPI/Swagger documentation
-- `aspect/` - AOP aspects for cross-cutting concerns (logging)
-- `config/` - Application configuration classes
-- `controller/` - REST API endpoint implementations
-- `entity/` - JPA entities with one-to-many relationship
+
+**Implemented:**
+- `aspect/` - AOP aspects for cross-cutting concerns (LoggingAspect.java)
+- `config/` - Application configuration classes (OpenApiConfig.java)
+
+**To Be Implemented:**
+- `entity/` - JPA entities (Orders, OrderItems)
 - `repository/` - Spring Data JPA repositories
 - `service/` - Business logic layer
+- `controller/` - REST API endpoint implementations
+- `dto/` - Request/Response DTOs
+- `exception/` - Custom exceptions and handlers
 
 ### Entity Relationship
 
@@ -147,6 +182,24 @@ private Orders order;
 - Always synchronize both sides of the bidirectional relationship when adding/removing items
 - JPA one-to-many mapping notes documented in `README.md`
 
+## Code Comments Guidelines
+
+When implementing entities, repositories, services, and controllers, add explanatory comments for:
+
+1. **Entity Relationships**: Explain why bidirectional is used, what `mappedBy` means, why Many side owns FK
+2. **Cascade & Orphan Removal**: Comment on what operations cascade and why orphanRemoval is enabled
+3. **Performance Considerations**: Note why LAZY fetch is used, how to avoid N+1 queries
+4. **Helper Methods**: Explain why `addItem()`/`removeItem()` sync both sides of relationship
+5. **SQL Behavior**: Document when extra UPDATE statements occur (unidirectional) vs direct INSERT (bidirectional)
+
+Example:
+```java
+// Bidirectional mapping - child owns FK, parent uses mappedBy
+// This avoids extra UPDATE statements that unidirectional @OneToMany generates
+@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+private List<OrderItems> orderItems = new ArrayList<>();
+```
+
 ## Helper Methods for Bidirectional Sync
 
 Add convenience methods to Orders entity:
@@ -175,3 +228,19 @@ public void removeItem(OrderItems item) {
 ### Bidirectional Relationship Not Synced
 - **Issue**: Adding item to collection without setting back-reference
 - **Solution**: Use helper methods that sync both sides
+
+## Current File Structure
+
+```
+src/main/java/com/github/order_manager/
+├── OrderManagerApplication.java        # Main entry point
+├── aspect/
+│   └── LoggingAspect.java              # AOP logging for controllers/services
+└── config/
+    └── OpenApiConfig.java              # Swagger/OpenAPI configuration
+
+src/main/resources/
+├── application.yaml                    # Main configuration
+├── application-postgres.yaml           # PostgreSQL profile config
+└── logback-spring.xml                  # Logging configuration (console + file)
+```
