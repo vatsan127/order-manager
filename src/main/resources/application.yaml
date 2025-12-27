@@ -1,0 +1,24 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /${spring.application.name}/${spring.application.version}
+---
+
+spring:
+  application:
+    name: order-manager
+    version: v1
+  profiles.active: postgres
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: none # none create update
+    show-sql: false # Not required when the org.hibernate.SQL DEBUG log is enabled.
+    properties.hibernate.format_sql: true
+  sql.init.mode: never # always
+  output.ansi.enabled: always
+---
+
+springdoc:
+  api-docs.path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
