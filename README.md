@@ -128,6 +128,25 @@ Specifies the foreign key column (used on owning side)
 - Example: If property is "order" and Order's PK is "id", column will be "order_id"
 - It's better to explicitly specify @JoinColumn for clarity!
 
+### @ForeignKey
+Used within `@JoinColumn` to specify a custom foreign key constraint name.
+
+**Example:**
+```java
+@ManyToOne
+@JoinColumn(
+    name = "order_id",
+    referencedColumnName = "id",
+    foreignKey = @ForeignKey(name = "FK_ITEM_TO_ORDER")
+)
+private Orders order;
+```
+
+**Why use it?**
+- Without this, JPA generates random constraint names like `FKa1b2c3d4e5`
+- Meaningful names help with debugging and database administration
+- Easier to identify constraint violations in error messages
+
 ---
 
 ## Unidirectional vs Bidirectional
@@ -310,7 +329,45 @@ public void removeItem(OrderItems item) {
 
 ### Infinite Recursion in JSON Serialization
 - **Issue**: In bidirectional relationships, serializing to JSON causes infinite loop (Order → Items → Order → ...)
-- **Solution**: Add `@JsonIgnore` on the child's back-reference field (the @ManyToOne side)
+- **Solutions**: Multiple approaches available:
+
+**Option 1: @JsonIgnore** (Simplest - recommended for this project)
+```java
+// Child side - excluded from serialization entirely
+@JsonIgnore
+@ManyToOne
+@JoinColumn(name = "order_id")
+private Orders order;
+```
+- Completely excludes the field from serialization and deserialization
+- Best when you never need the back-reference in JSON
+
+**Option 2: @JsonManagedReference / @JsonBackReference**
+```java
+// Parent side (Orders) - serialized normally
+@JsonManagedReference
+@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+private List<OrderItems> orderItems;
+
+// Child side (OrderItems) - excluded during serialization
+@JsonBackReference
+@ManyToOne
+@JoinColumn(name = "order_id")
+private Orders order;
+```
+- `@JsonManagedReference`: Forward part, serialized normally
+- `@JsonBackReference`: Back part, omitted from serialization
+- Maintains the relationship during deserialization
+
+**Option 3: @JsonIdentityInfo**
+```java
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@Entity
+public class Orders { ... }
+```
+- Uses object identity to handle circular references
+- First occurrence serializes full object, subsequent occurrences serialize only the ID
+- Useful when both sides need to be serialized
 
 ### Collection Not Initialized
 - **Issue**: NullPointerException when adding items to uninitialized collection

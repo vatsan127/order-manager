@@ -179,7 +179,7 @@ private Orders order;
 
 - The application uses constructor-based dependency injection (no `@Autowired`)
 - JPA configuration has `open-in-view: false` to prevent lazy loading issues
-- Use `@JsonIgnore` on the `order` field in OrderItems to prevent infinite recursion during JSON serialization
+- Prevent JSON infinite recursion using one of: `@JsonIgnore` (simplest), `@JsonManagedReference/@JsonBackReference`, or `@JsonIdentityInfo`
 - Always synchronize both sides of the bidirectional relationship when adding/removing items
 - JPA one-to-many mapping notes documented in `README.md`
 
