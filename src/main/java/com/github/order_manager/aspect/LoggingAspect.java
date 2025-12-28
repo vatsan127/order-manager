@@ -1,52 +1,43 @@
 package com.github.order_manager.aspect;
 
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
+/**
+ * AOP aspect for centralized logging of controller and service methods.
+ *
+ * Uses only @Around advice to avoid duplicate logging that occurs when
+ * combining @Before/@After/@AfterThrowing with @Around on the same pointcut.
+ */
 @Slf4j
 @Aspect
 @Component
 public class LoggingAspect {
 
-    /**
-     * Pointcut for all methods in controller package
-     */
     @Pointcut("execution(* com.github.order_manager.controller..*(..))")
     public void controllerMethods() {}
 
-    /**
-     * Pointcut for all methods in service package
-     */
     @Pointcut("execution(* com.github.order_manager.service..*(..))")
     public void serviceMethods() {}
 
     /**
-     * Log method entry with parameters
+     * Logs method entry, exit, execution time, and exceptions.
+     *
      */
-    @Before("controllerMethods() || serviceMethods()")
-    public void logBefore(JoinPoint joinPoint) {
+    @Around("controllerMethods() || serviceMethods()")
+    public Object logMethodExecution(ProceedingJoinPoint joinPoint) throws Throwable {
         String className = joinPoint.getSignature().getDeclaringTypeName();
+        String shortClassName = className.substring(className.lastIndexOf('.') + 1);
         String methodName = joinPoint.getSignature().getName();
         Object[] args = joinPoint.getArgs();
 
-        log.info("{} :: {} :: Entry :: args={}",
-                className.substring(className.lastIndexOf('.') + 1),
-                methodName,
-                Arrays.toString(args));
-    }
-
-    /**
-     * Log method execution with return value
-     */
-    @Around("controllerMethods() || serviceMethods()")
-    public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
-        String className = joinPoint.getSignature().getDeclaringTypeName();
-        String methodName = joinPoint.getSignature().getName();
+        log.info("{} :: {} :: Entry :: args={}", shortClassName, methodName, Arrays.toString(args));
 
         long startTime = System.currentTimeMillis();
 
@@ -54,38 +45,16 @@ public class LoggingAspect {
             Object result = joinPoint.proceed();
             long executionTime = System.currentTimeMillis() - startTime;
 
-            log.info("{} :: {} :: Exit :: executionTime={}ms :: result={}",
-                    className.substring(className.lastIndexOf('.') + 1),
-                    methodName,
-                    executionTime,
-                    result);
+            log.info("{} :: {} :: Exit :: executionTime={}ms", shortClassName, methodName, executionTime);
 
             return result;
         } catch (Exception e) {
             long executionTime = System.currentTimeMillis() - startTime;
 
             log.error("{} :: {} :: Exception :: executionTime={}ms :: error={}",
-                    className.substring(className.lastIndexOf('.') + 1),
-                    methodName,
-                    executionTime,
-                    e.getMessage());
+                    shortClassName, methodName, executionTime, e.getMessage());
 
             throw e;
         }
-    }
-
-    /**
-     * Log exceptions thrown from controller or service methods
-     */
-    @AfterThrowing(pointcut = "controllerMethods() || serviceMethods()", throwing = "exception")
-    public void logAfterThrowing(JoinPoint joinPoint, Throwable exception) {
-        String className = joinPoint.getSignature().getDeclaringTypeName();
-        String methodName = joinPoint.getSignature().getName();
-
-        log.error("{} :: {} :: Exception thrown :: {}",
-                className.substring(className.lastIndexOf('.') + 1),
-                methodName,
-                exception.getMessage(),
-                exception);
     }
 }

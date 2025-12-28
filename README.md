@@ -19,11 +19,13 @@ create database order_db;
 ┌─────────────────┐              ┌─────────────────┐
 │     Orders      │              │   OrderItems    │
 ├─────────────────┤              ├─────────────────┤
-│ id (PK)         │              │ id (PK)         │
-│ orderNumber     │──────1:N────>│ order_id (FK)   │
-│ customerName    │              │ productName     │
-│ orderDate       │              │ quantity        │
-│ status          │              │ unitPrice       │
+│ id (PK)         │──────1:N────>│ id (PK)         │
+│ customerName    │              │ order_id (FK)   │
+│ orderDate       │              │ productName     │
+│ status          │              │ quantity        │
+│ createdAt       │              │ unitPrice       │
+│ updatedAt       │              │ createdAt       │
+│                 │              │ updatedAt       │
 └─────────────────┘              └─────────────────┘
 ```
 
@@ -62,8 +64,8 @@ In this relationship, there's **no join/intermediate table**. The FK lives direc
 │     orders      │                  │   order_items   │
 ├─────────────────┤                  ├─────────────────┤
 │ id (PK)         │◄─────────────────│ order_id (FK)   │
-│ order_number    │   Direct FK      │ id (PK)         │
-│ customer_name   │                  │ product_name    │
+│ customer_name   │   Direct FK      │ id (PK)         │
+│ order_date      │                  │ product_name    │
 └─────────────────┘                  └─────────────────┘
 ```
 
@@ -170,7 +172,7 @@ public class Orders {
 
 **SQL Generated (3 statements instead of 2):**
 ```sql
-INSERT INTO orders (order_number) VALUES ('ORD-001');
+INSERT INTO orders (customer_name) VALUES ('John Doe');
 INSERT INTO order_items (product_name) VALUES ('Laptop');  -- No FK!
 UPDATE order_items SET order_id = 1 WHERE id = 1;          -- Extra UPDATE
 ```
@@ -383,20 +385,24 @@ public class Orders { ... }
 
 ```sql
 CREATE TABLE orders (
-    id SERIAL PRIMARY KEY,
-    order_number VARCHAR(20) NOT NULL UNIQUE,
+    id BIGSERIAL PRIMARY KEY,
     customer_name VARCHAR(100) NOT NULL,
     order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE order_items (
-    id SERIAL PRIMARY KEY,
-    order_id INTEGER NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    order_id BIGINT NOT NULL,
     product_name VARCHAR(100) NOT NULL,
-    quantity INTEGER NOT NULL,
-    unit_price DECIMAL(10,2) NOT NULL,
-    CONSTRAINT FK_ITEM_TO_ORDER FOREIGN KEY (order_id) REFERENCES orders(id)
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    unit_price DECIMAL(10,2) NOT NULL CHECK (unit_price >= 0),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_ITEM_TO_ORDER FOREIGN KEY (order_id)
+        REFERENCES orders(id) ON DELETE CASCADE
 );
 
 -- Index on FK for better join performance
@@ -408,8 +414,8 @@ CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 ## Sample Data
 
 ```sql
-INSERT INTO orders (order_number, customer_name, status)
-VALUES ('ORD-001', 'John Doe', 'PENDING');
+INSERT INTO orders (customer_name, status)
+VALUES ('John Doe', 'PENDING');
 
 INSERT INTO order_items (order_id, product_name, quantity, unit_price)
 VALUES
