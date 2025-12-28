@@ -1,6 +1,5 @@
 package com.github.order_manager.entity;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -37,33 +36,26 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Order entity representing a customer order")
 public class Orders {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "Unique identifier", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
     @Column(nullable = false, length = 100)
-    @Schema(description = "Customer name", example = "John Doe", requiredMode = Schema.RequiredMode.REQUIRED)
     private String customerName;
 
     @Column(nullable = false)
-    @Schema(description = "Order date", example = "2024-01-15T10:30:00", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime orderDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    @Schema(description = "Order status", example = "PENDING", accessMode = Schema.AccessMode.READ_ONLY)
     private OrderStatus status;
 
     @Column(nullable = false, updatable = false)
-    @Schema(description = "Creation timestamp", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
-    @Schema(description = "Last update timestamp", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime updatedAt;
 
     /**
@@ -78,7 +70,6 @@ public class Orders {
      * Initialize with ArrayList to avoid NullPointerException when adding items.
      */
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Schema(description = "List of order items")
     private List<OrderItems> orderItems = new ArrayList<>();
 
     /**

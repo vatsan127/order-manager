@@ -1,7 +1,6 @@
 package com.github.order_manager.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -36,12 +35,10 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Order item entity representing a product in an order")
 public class OrderItems {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "Unique identifier", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
     /**
@@ -67,23 +64,18 @@ public class OrderItems {
     private Orders order;
 
     @Column(nullable = false, length = 100)
-    @Schema(description = "Product name", example = "Laptop", requiredMode = Schema.RequiredMode.REQUIRED)
     private String productName;
 
     @Column(nullable = false)
-    @Schema(description = "Quantity ordered", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer quantity;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    @Schema(description = "Unit price", example = "999.99", requiredMode = Schema.RequiredMode.REQUIRED)
     private BigDecimal unitPrice;
 
     @Column(nullable = false, updatable = false)
-    @Schema(description = "Creation timestamp", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
-    @Schema(description = "Last update timestamp", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime updatedAt;
 
     /**

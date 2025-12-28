@@ -24,7 +24,7 @@ Spring Boot 4.0.1 application demonstrating JPA one-to-many relationships betwee
 | Repositories | ✅ Done | OrderRepository, OrderItemRepository |
 | Services | ✅ Done | OrderService |
 | Controllers | ✅ Done | OrderController |
-| Swagger Documentation | ✅ Done | `OrderApi.java` interface in `swagger/` package |
+| Swagger Documentation | ✅ Done | All Swagger code in `swagger/` package only |
 | Database Schema | ✅ Done | `schema.sql` |
 
 ## Key Dependencies
@@ -203,7 +203,7 @@ private Orders order;
 - JPA `open-in-view: false` to prevent lazy loading issues
 - `@JsonIgnore` on `OrderItems.order` prevents infinite recursion
 - Always use helper methods `addItem()`/`removeItem()` for bidirectional sync
-- Swagger documentation separated into `OrderApi` interface in `swagger/` package
+- All Swagger/OpenAPI code is isolated in `swagger/` package only (no `@Schema` annotations in entities)
 - `LoggingAspect` uses only `@Around` advice (avoids duplicate entry/exception logs)
 - No `@Builder` annotation - use setters or all-args constructor
 - No `name` in `@Column` - Hibernate naming strategy handles camelCase → snake_case
