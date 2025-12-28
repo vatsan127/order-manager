@@ -20,11 +20,6 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Orders, Long> {
 
     /**
-     * Find all orders by status.
-     */
-    List<Orders> findByStatus(OrderStatus status);
-
-    /**
      * Find all orders with their items eagerly loaded.
      *
      * Uses JOIN FETCH to load items in a single query, avoiding N+1 problem.
@@ -34,10 +29,17 @@ public interface OrderRepository extends JpaRepository<Orders, Long> {
     List<Orders> findAllWithItems();
 
     /**
-     * Find order by ID with items eagerly loaded.
+     * Find order by ID with items eagerly loaded (Native Query example).
      *
-     * JOIN FETCH ensures items are loaded in the same query as the order.
+     * This method demonstrates native SQL query usage. Compare with findAllWithItems() which uses JPQL.
+     *
+     * JPQL vs Native Query comparison:
+     * - JPQL (findAllWithItems): Database-agnostic, easier to maintain, handles entity mapping automatically
+     * - Native SQL (this method): PostgreSQL-specific, useful for DB-specific features (CTEs, window functions, jsonb)
+     * - Performance: Nearly identical - Hibernate generates optimal SQL from JPQL
+     * - Recommendation: Prefer JPQL unless you need DB-specific features
      */
-    @Query("SELECT o FROM Orders o LEFT JOIN FETCH o.orderItems WHERE o.id = :id")
+    @Query(value = "SELECT DISTINCT o.* FROM orders o LEFT JOIN order_items oi ON o.id = oi.order_id WHERE o.id = :id",
+           nativeQuery = true)
     Optional<Orders> findByIdWithItems(@Param("id") Long id);
 }

@@ -245,6 +245,42 @@ public void removeItem(OrderItems item) {
 - **Issue**: Jackson tries to serialize Order -> Items -> Order -> Items...
 - **Solution**: `@JsonIgnore` on `OrderItems.order` field
 
+## JPQL vs Native Query
+
+This project uses JPQL for custom queries. Here's a comparison:
+
+| Aspect | JPQL | Native SQL |
+|--------|------|------------|
+| Portability | Database-agnostic | Database-specific |
+| Maintainability | Uses entity/field names | Uses table/column names |
+| Entity Mapping | Automatic | Manual or requires `@SqlResultSetMapping` |
+| Performance | Nearly identical | Nearly identical |
+| Type Safety | Validated at startup | Validated at runtime |
+
+**When to use JPQL (preferred):**
+- Standard CRUD and JOIN operations
+- When database portability matters
+- Simpler queries that JPQL can express
+
+**When to use Native SQL:**
+- PostgreSQL-specific features (CTEs, window functions, `jsonb` operators)
+- Complex queries JPQL can't express
+- Performance-critical queries needing DB-specific optimizations
+
+**Examples in this project (OrderRepository.java):**
+```java
+// JPQL - findAllWithItems()
+@Query("SELECT DISTINCT o FROM Orders o LEFT JOIN FETCH o.orderItems")
+List<Orders> findAllWithItems();
+
+// Native SQL - findByIdWithItems()
+@Query(value = "SELECT DISTINCT o.* FROM orders o LEFT JOIN order_items oi ON o.id = oi.order_id WHERE o.id = :id",
+       nativeQuery = true)
+Optional<Orders> findByIdWithItems(@Param("id") Long id);
+```
+
+**Recommendation:** Prefer JPQL unless you need database-specific features.
+
 ## File Structure
 
 ```
