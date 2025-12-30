@@ -1,7 +1,6 @@
 package com.github.order_manager.repository;
 
 import com.github.order_manager.entity.Orders;
-import com.github.order_manager.entity.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

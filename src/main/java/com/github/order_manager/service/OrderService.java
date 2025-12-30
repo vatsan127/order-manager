@@ -5,7 +5,6 @@ import com.github.order_manager.entity.Orders;
 import com.github.order_manager.repository.OrderRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -16,7 +15,6 @@ import java.util.NoSuchElementException;
  */
 @Service
 @Slf4j
-@Transactional
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -29,7 +27,6 @@ public class OrderService {
      * Get all orders with their items.
      * Uses JOIN FETCH to avoid N+1 query problem.
      */
-    @Transactional(readOnly = true)
     public List<Orders> getAllOrders() {
         return orderRepository.findAllWithItems();
     }
@@ -37,7 +34,6 @@ public class OrderService {
     /**
      * Get order by ID with items.
      */
-    @Transactional(readOnly = true)
     public Orders getOrderById(Long id) {
         return orderRepository.findByIdWithItems(id)
                 .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + id));
